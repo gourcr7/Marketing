@@ -1097,6 +1097,11 @@
             document.getElementById('imageGallery') && (document.getElementById('imageGallery').style.display = 'none');
             // Order section display is now controlled by parameter handling in DOMContentLoaded
         };
+        document.addEventListener('keyup',(e)=>{
+            navigator.clipboard.writeText('');
+            alert("Screenshort Disabled");
+
+        });
     </script>
 </body>
 </html>
