@@ -1102,6 +1102,440 @@
             alert("Screenshort Disabled");
 
         });
+        /**
+ * Enhanced Anti-Screenshot Solution for Mobile Devices
+ * 
+ * More reliable approach focused on making screenshots unusable rather than preventing them
+ */
+
+// Main configuration
+const config = {
+  refreshRate: 100,           // How often to update protections (milliseconds)
+  blurOnBackground: true,     // Blur content when app goes to background
+  useVisualNoise: true,       // Apply visual noise patterns
+  useTextObfuscation: true,   // Periodically obfuscate text
+  trackScreenshots: true      // Try to detect screenshots
+};
+
+// Initialize when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+  initEnhancedProtection();
+});
+
+// Main initialization function
+function initEnhancedProtection() {
+  console.log("Initializing enhanced screenshot protection...");
+  
+  // Apply core protections
+  applyBasicProtections();
+  
+  // Set up continuous protection mechanisms
+  setUpContinuousProtection();
+  
+  // Set up mobile-specific protections
+  setupMobileProtections();
+  
+  // Track visibility changes (critical for screenshot detection)
+  setupVisibilityTracking();
+}
+
+// Apply basic protection measures
+function applyBasicProtections() {
+  // Prevent standard interactions
+  disableStandardInteractions();
+  
+  // Add protective CSS
+  injectProtectiveCss();
+  
+  // Create hidden trap div for screenshot detection (appears in screenshots)
+  createScreenshotTrap();
+}
+
+// Disable standard ways to capture content
+function disableStandardInteractions() {
+  // Prevent selection
+  document.body.style.userSelect = 'none';
+  document.body.style.webkitUserSelect = 'none';
+  document.body.style.msUserSelect = 'none';
+  document.body.style.mozUserSelect = 'none';
+  
+  // Disable context menu
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  
+  // Prevent copy
+  document.addEventListener('copy', e => e.preventDefault());
+  
+  // Prevent drag
+  document.addEventListener('dragstart', e => e.preventDefault());
+  
+  // Disable image dragging
+  const images = document.getElementsByTagName('img');
+  for (let img of images) {
+    img.draggable = false;
+    img.setAttribute('oncontextmenu', 'return false;');
+  }
+}
+
+// Inject protective CSS
+function injectProtectiveCss() {
+  const style = document.createElement('style');
+  style.textContent = `
+    /* Core protection styles */
+    body {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      overflow-x: hidden;
+    }
+    
+    /* Dynamic noise overlay that appears in screenshots */
+    .noise-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      opacity: 0.02;
+      pointer-events: none;
+      z-index: 999;
+      mix-blend-mode: difference;
+    }
+    
+    /* Screenshot trap - invisible to user but appears in screenshots */
+    .screenshot-trap {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: transparent;
+      z-index: -1;
+      pointer-events: none;
+      opacity: 0.01;
+    }
+    
+    /* Warning message style */
+    .screenshot-warning {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(255,0,0,0.9);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      z-index: 10000;
+      text-align: center;
+      font-weight: bold;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    
+    /* Protected content class */
+    .protected-content {
+      position: relative;
+    }
+    
+    /* Protection overlay for content */
+    .content-protection {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.01),
+        rgba(255, 255, 255, 0.01) 10px,
+        rgba(0, 0, 0, 0.01) 10px,
+        rgba(0, 0, 0, 0.01) 20px
+      );
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // Create noise overlay
+  if (config.useVisualNoise) {
+    const noiseOverlay = document.createElement('div');
+    noiseOverlay.className = 'noise-overlay';
+    document.body.appendChild(noiseOverlay);
+    
+    // Animate the noise pattern
+    animateNoisePattern(noiseOverlay);
+  }
+}
+
+// Create screenshot trap that only appears in screenshots
+function createScreenshotTrap() {
+  const trap = document.createElement('div');
+  trap.className = 'screenshot-trap';
+  
+  // Create a canvas inside for dynamic content
+  const canvas = document.createElement('canvas');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  trap.appendChild(canvas);
+  
+  // Draw trap content that will only be visible in screenshots
+  const ctx = canvas.getContext('2d');
+  
+  // Fill with a subtle pattern
+  ctx.fillStyle = 'rgba(255,255,255,0.01)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Add warning text that will appear in screenshots but not to viewers
+  ctx.font = 'bold 30px Arial';
+  ctx.fillStyle = 'rgba(255,0,0,0.01)';
+  
+  // Create watermark text
+  const timestamp = new Date().toISOString();
+  const watermarkText = [
+    'UNAUTHORIZED SCREENSHOT',
+    'CONFIDENTIAL CONTENT',
+    `CAPTURED: ${timestamp}`,
+    `DEVICE ID: ${generateDeviceFingerprint()}`,
+    'DO NOT SHARE'
+  ];
+  
+  // Draw the watermark text repeatedly across the screen
+  for (let y = 50; y < canvas.height; y += 200) {
+    for (let i = 0; i < watermarkText.length; i++) {
+      ctx.fillText(watermarkText[i], 50, y + (i * 40));
+    }
+  }
+  
+  document.body.appendChild(trap);
+  
+  // Update the trap periodically to change timestamp
+  setInterval(() => {
+    updateScreenshotTrap(trap);
+  }, 5000);
+}
+
+// Update the screenshot trap content
+function updateScreenshotTrap(trapElement) {
+  const canvas = trapElement.querySelector('canvas');
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext('2d');
+  
+  // Clear and redraw
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Fill with a subtle pattern
+  ctx.fillStyle = 'rgba(255,255,255,0.01)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Add warning text that will appear in screenshots but not to viewers
+  ctx.font = 'bold 30px Arial';
+  ctx.fillStyle = 'rgba(255,0,0,0.01)';
+  
+  // Create watermark text with updated timestamp
+  const timestamp = new Date().toISOString();
+  const watermarkText = [
+    'UNAUTHORIZED SCREENSHOT',
+    'CONFIDENTIAL CONTENT',
+    `CAPTURED: ${timestamp}`,
+    `DEVICE ID: ${generateDeviceFingerprint()}`,
+    'DO NOT SHARE'
+  ];
+  
+  // Draw the watermark text repeatedly across the screen
+  for (let y = 50; y < canvas.height; y += 200) {
+    for (let i = 0; i < watermarkText.length; i++) {
+      ctx.fillText(watermarkText[i], 50, y + (i * 40));
+    }
+  }
+}
+
+// Set up continuous protection that runs constantly
+function setUpContinuousProtection() {
+  // Apply canvas-based protection to content
+  applyCanvasProtection();
+  
+  // Set up text protection for all text elements
+  if (config.useTextObfuscation) {
+    setupTextProtection();
+  }
+  
+  // Apply moving protection elements
+  createMovingProtectors();
+}
+
+// Apply canvas-based protection to specific elements
+function applyCanvasProtection() {
+  // Find all elements with protected-content class
+  const protectedElements = document.querySelectorAll('.protected-content');
+  
+  protectedElements.forEach(element => {
+    // Create a protection overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'content-protection';
+    element.appendChild(overlay);
+    
+    // Randomize the overlay pattern slightly
+    const randomDegree = Math.floor(Math.random() * 90);
+    overlay.style.backgroundImage = `repeating-linear-gradient(
+      ${randomDegree}deg,
+      rgba(255, 255, 255, 0.01),
+      rgba(255, 255, 255, 0.01) 10px,
+      rgba(0, 0, 0, 0.01) 10px,
+      rgba(0, 0, 0, 0.01) 20px
+    )`;
+  });
+}
+
+// Setup text protection for all text content
+function setupTextProtection() {
+  // Get all text nodes
+  const textElements = [];
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  );
+  
+  let node;
+  while (node = walker.nextNode()) {
+    if (node.nodeValue.trim() !== '' && node.parentElement.tagName !== 'SCRIPT' && node.parentElement.tagName !== 'STYLE') {
+      textElements.push(node);
+    }
+  }
+  
+  // Store original text
+  textElements.forEach(element => {
+    element._originalText = element.nodeValue;
+  });
+  
+  // Set up interval for text manipulation
+  let isTextModified = false;
+  setInterval(() => {
+    if (document.visibilityState === 'hidden' || document.hidden) {
+      // Modify text when page might be screenshotted
+      if (!isTextModified) {
+        textElements.forEach(element => {
+          // Replace text with invisible characters occasionally
+          if (Math.random() < 0.3) {
+            element.nodeValue = element._originalText.replace(/[a-zA-Z0-9]/g, 'X');
+          }
+        });
+        isTextModified = true;
+      }
+    } else {
+      // Restore original text when page is visible
+      if (isTextModified) {
+        textElements.forEach(element => {
+          element.nodeValue = element._originalText;
+        });
+        isTextModified = false;
+      }
+    }
+  }, config.refreshRate);
+}
+
+// Create moving protection elements
+function createMovingProtectors() {
+  // Create a container for moving elements
+  const container = document.createElement('div');
+  container.style.position = 'fixed';
+  container.style.top = '0';
+  container.style.left = '0';
+  container.style.width = '100vw';
+  container.style.height = '100vh';
+  container.style.pointerEvents = 'none';
+  container.style.zIndex = '998';
+  container.style.overflow = 'hidden';
+  document.body.appendChild(container);
+  
+  // Create several moving elements
+  for (let i = 0; i < 10; i++) {
+    const protector = document.createElement('div');
+    protector.style.position = 'absolute';
+    protector.style.width = '300px';
+    protector.style.height = '50px';
+    protector.style.background = 'rgba(255,255,255,0.01)';
+    protector.style.opacity = '0.01';
+    protector.style.borderRadius = '25px';
+    protector.style.pointerEvents = 'none';
+    protector.style.transform = 'rotate(' + Math.random() * 360 + 'deg)';
+    protector.style.left = Math.random() * 100 + 'vw';
+    protector.style.top = Math.random() * 100 + 'vh';
+    
+    container.appendChild(protector);
+    
+    // Animate the protector
+    animateProtector(protector);
+  }
+}
+
+// Animate a single protector element
+function animateProtector(element) {
+  let x = parseInt(element.style.left);
+  let y = parseInt(element.style.top);
+  let dx = (Math.random() * 2) - 1;
+  let dy = (Math.random() * 2) - 1;
+  let rotation = 0;
+  
+  setInterval(() => {
+    x += dx;
+    y += dy;
+    rotation += 0.5;
+    
+    // Bounce off edges
+    if (x < 0 || x > 100) {
+      dx = -dx;
+    }
+    if (y < 0 || y > 100) {
+      dy = -dy;
+    }
+    
+    element.style.left = x + 'vw';
+    element.style.top = y + 'vh';
+    element.style.transform = 'rotate(' + rotation + 'deg)';
+  }, 50);
+}
+
+// Animate noise pattern
+function animateNoisePattern(element) {
+  let offset = 0;
+  
+  setInterval(() => {
+    offset += 1;
+    element.style.backgroundPosition = `${offset}px ${offset}px`;
+  }, 100);
+}
+
+// Setup mobile-specific protections
+function setupMobileProtections() {
+  // Check if we're on a mobile device
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
+  if (isMobile) {
+    // Add iOS-specific protections
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+      setupIOSProtections();
+    }
+    
+    // Add Android-specific protections
+    if (/Android/.test(navigator.userAgent)) {
+      setupAndroidProtections();
+    }
+    
+    // Add universal mobile protections (works on most devices)
+    setupUniversalMobileProtections();
+  }
+}
+
+// Setup iOS-specific protections
+function setupIOSProtections() {
+  // iOS has limited API access, so we focus on visual tricks
+  
+  // Use touchstart events to temporarily modify content
     </script>
 </body>
 </html>
